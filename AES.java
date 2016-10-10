@@ -23,7 +23,7 @@ public class AES {
 	 */
 	public AES(char mode, String key, String inputfile) {
 		this.mode = mode;
-		context = new ArrayList<byte[]>();
+		this.context = new ArrayList<byte[]>();
 		this.init(key, inputfile);
 	}
 
@@ -73,7 +73,7 @@ public class AES {
 	 * @param inputfile
 	 */
 	private byte[] HextoByteArray(String HexCharacter) {
-		
+		byte[] byteArray = new byte[HexCharacter.length()/2];
 		// check if input contains any non-hex character
 		if (!HexCharacter.matches("-?[0-9a-fA-F]+")) {
 			ErrorHandler("Input string contains non-hex character");
@@ -84,11 +84,15 @@ public class AES {
 		}
 		
 		try {
-			byte[] byteArray = HexCharacter.getBytes(Charset.forName("UTF-8"));
-			return byteArray;
+			for (int i = 0; i < HexCharacter.length(); i += 2) {
+				byteArray[i / 2] = (byte) ((Character.digit(HexCharacter.charAt(i), 16) << 4) + Character.digit(
+						HexCharacter.charAt(i + 1), 16));
+			}
+			
 		} catch (Exception ex) {
 			throw ex;
 		}
+		return byteArray;
 	}
 
 	private static void ErrorHandler(String error) {
