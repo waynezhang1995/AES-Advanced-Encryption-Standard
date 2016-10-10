@@ -14,7 +14,7 @@ public class AES {
 	private static char mode;
 	private static byte[] key;
 	private static byte[][] context;
-	private static final int Rount = 14;
+	private static final int Round = 14;
 
 	/**
 	 * Constructor
@@ -28,6 +28,15 @@ public class AES {
 		this.SourceSetUp(key, inputfile);
 	}
 
+	private void Calculate() {
+		S_BOX sBox = new S_BOX(this.mode);
+		if (this.mode == 'e') {
+			AES_Encryption encryption = new AES_Encryption(sBox.getSBOX(), this.key, this.context);
+		} else if (this.mode == 'd') {
+			AES_Decryption decryption = new AES_Decryption(sBox.getSBOX(), this.key, this.context);
+		}
+	}
+
 	private void SourceSetUp(String key, String inputfile) {
 		Scanner key_Scanner;
 		Scanner inputfile_Scanner;
@@ -39,16 +48,13 @@ public class AES {
 			// key contains a single line of 64 hex characters, which represents
 			// a 256-bit key
 			this.key = HextoByteArray(key_Scanner.nextLine().toUpperCase());
-			
+
 			// convert input file to byte array line by line
 			int index = 0;
 			while (inputfile_Scanner.hasNextLine()) {
 				this.context[index] = HextoByteArray(inputfile_Scanner.nextLine().toUpperCase());
 				index++;
 			}
-			
-			
-
 		} catch (Exception ex) {
 			ErrorHandler(ex.toString());
 		}
@@ -96,5 +102,6 @@ public class AES {
 		}
 		// Ok mode key file text file
 		AES aes = new AES(args[0].charAt(0), args[1], args[2]);
+		aes.Calculate();
 	}
 }
