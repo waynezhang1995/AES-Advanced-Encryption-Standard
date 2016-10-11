@@ -66,6 +66,7 @@ public class AES_TEST {
 	}
 
 	private static byte[][] generateSubkeys(byte[] key) {
+		
 		byte[][] tmp = new byte[Nb * (Nr + 1)][4];
 
 		int i = 0;
@@ -83,7 +84,7 @@ public class AES_TEST {
 			byte[] temp = new byte[4];
 			for (int k = 0; k < 4; k++)
 				temp[k] = tmp[i - 1][k];
-
+			
 			if (i % Nk == 0) {
 				temp = SubWord(rotateWord(temp));
 
@@ -256,7 +257,6 @@ public class AES_TEST {
 			state = InvShiftRows(state);
 			state = AddRoundKey(state, w, round);
 			state = InvMixColumns(state);
-
 		}
 		state = InvSubBytes(state);
 		state = InvShiftRows(state);
@@ -281,29 +281,15 @@ public class AES_TEST {
 	}
 
 	public static byte[] decrypt(byte[] in, byte[] key) {
-		int i;
-		byte[] tmp = new byte[in.length];
-		byte[] bloc = new byte[16];
-
+		
 		Nb = 4;
-		Nk = key.length / 4;
-		Nr = Nk + 6;
+		Nk = 8;
+		Nr = 14;
+		byte[] bloc = new byte[16];
 		w = generateSubkeys(key);
-
-		for (i = 0; i < in.length; i++) {
-			if (i > 0 && i % 16 == 0) {
-				bloc = decryptBloc(bloc);
-				System.arraycopy(bloc, 0, tmp, i - 16, bloc.length);
-			}
-			if (i < in.length)
-				bloc[i % 16] = in[i];
-		}
-		bloc = decryptBloc(bloc);
-		System.arraycopy(bloc, 0, tmp, i - 16, bloc.length);
-
-		tmp = deletePadding(tmp);
-
-		return tmp;
+		bloc = decryptBloc(in);
+		return bloc;
+	
 	}
 
 	private static byte[] deletePadding(byte[] input) {
@@ -341,9 +327,16 @@ public class AES_TEST {
 		Scanner file_Scanner;
 		try {
 			key_Scanner = new Scanner(new File("/Users/waynezhang/Desktop/JavaDevelop/AES/src/key.txt"));
-			file_Scanner = new Scanner(new File("/Users/waynezhang/Desktop/JavaDevelop/AES/src/input.txt"));
-			byte[] result = encrypt(HextoByteArray(file_Scanner.nextLine()), HextoByteArray(key_Scanner.nextLine()));
-			// System.out.println(Arrays.toString(result));
+			file_Scanner = new Scanner(new File("/Users/waynezhang/Desktop/JavaDevelop/AES/src/input.txt.enc"));
+			byte[] result = decrypt(HextoByteArray(file_Scanner.nextLine()), HextoByteArray(key_Scanner.nextLine()));
+			char[] hexCipher = new char[result.length * 2];
+			for (int i = 0; i < result.length; i++) {
+				char[] hexTable = "0123456789ABCDEF".toCharArray();
+				hexCipher[i * 2] = hexTable [(result[i] & 0xFF) >>> 4]; 
+				hexCipher[i * 2 + 1] = hexTable[(result[i] & 0xFF) & 0x0F];
+			}
+			String output = new String(hexCipher);
+			
 		} catch (Exception ex) {
 
 		}
