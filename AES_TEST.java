@@ -77,27 +77,26 @@ public class AES_TEST {
 			tmp[i][3] = key[i * 4 + 3];
 			i++;
 		}
-		
+
 		i = Nk;
 		while (i < Nb * (Nr + 1)) {
 			byte[] temp = new byte[4];
 			for (int k = 0; k < 4; k++)
 				temp[k] = tmp[i - 1][k];
-			
+
 			if (i % Nk == 0) {
 				temp = SubWord(rotateWord(temp));
-				
+
 				temp[0] = (byte) (temp[0] ^ (Rcon[i / Nk] & 0xff));
-				
-			} 
-			else if (Nk > 6 && i % Nk == 4) {
+
+			} else if (Nk > 6 && i % Nk == 4) {
 				temp = SubWord(temp);
 			}
-			
+
 			tmp[i] = xor_func(tmp[i - Nk], temp);
 			i++;
 		}
-		
+
 		return tmp;
 	}
 
@@ -222,13 +221,11 @@ public class AES_TEST {
 		byte[] tmp = new byte[in.length];
 
 		byte[][] state = new byte[4][Nb];
-		for (int i = 0; i < in.length; i++){
+		for (int i = 0; i < in.length; i++) {
 			state[i / 4][i % 4] = in[i % 4 * 4 + i / 4];
 		}
 		state = AddRoundKey(state, w, 0);
-		for(int k = 0 ; k < 4;k++){
-			System.out.println(Arrays.toString(state[k]));
-		}
+
 		for (int round = 1; round < Nr; round++) {
 			state = SubBytes(state);
 			state = ShiftRows(state);
@@ -238,10 +235,10 @@ public class AES_TEST {
 		state = SubBytes(state);
 		state = ShiftRows(state);
 		state = AddRoundKey(state, w, Nr);
-
 		for (int i = 0; i < tmp.length; i++)
 			tmp[i % 4 * 4 + i / 4] = state[i / 4][i % 4];
-
+		
+		System.out.println(Arrays.toString(tmp));
 		return tmp;
 	}
 
@@ -339,18 +336,18 @@ public class AES_TEST {
 		return byteArray;
 	}
 
-	public static void main(String [] args) {
+	public static void main(String[] args) {
 		Scanner key_Scanner;
 		Scanner file_Scanner;
 		try {
 			key_Scanner = new Scanner(new File("/Users/waynezhang/Desktop/JavaDevelop/AES/src/key.txt"));
 			file_Scanner = new Scanner(new File("/Users/waynezhang/Desktop/JavaDevelop/AES/src/input.txt"));
 			byte[] result = encrypt(HextoByteArray(file_Scanner.nextLine()), HextoByteArray(key_Scanner.nextLine()));
-			//System.out.println(Arrays.toString(result));
+			// System.out.println(Arrays.toString(result));
 		} catch (Exception ex) {
 
 		}
-		
+
 	}
 
 }

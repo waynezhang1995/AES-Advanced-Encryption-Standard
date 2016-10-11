@@ -15,8 +15,9 @@ public class AES {
 
 	private static char mode;
 	private static byte[] key;
-	private static ArrayList<byte []>context;
+	private static ArrayList<byte[]> context;
 	private static final int Round = 14;
+	private String inputFileName;
 
 	/**
 	 * Constructor
@@ -34,33 +35,34 @@ public class AES {
 	private void Calculate() {
 		S_BOX sBox = new S_BOX(this.mode);
 		if (this.mode == 'e') {
-			AES_Encryption encryption = new AES_Encryption(sBox.getSBOX(), this.key, this.context);
+			AES_Encryption encryption = new AES_Encryption(sBox.getSBOX(), this.key, this.context,this.inputFileName);
 			encryption.encrypt();
 		} else if (this.mode == 'd') {
-			AES_Decryption decryption = new AES_Decryption(sBox.getSBOX(), this.key, this.context);
+			AES_Decryption decryption = new AES_Decryption(sBox.getSBOX(), this.key, this.context,this.inputFileName);
 			decryption.decrypt();
 		}
 	}
 
 	private void SourceSetUp(String key, String inputfile) {
+		this.inputFileName = inputfile;
 		Scanner key_Scanner;
 		Scanner inputfile_Scanner;
 		// scanner key and plaintext file
 		try {
 			key_Scanner = new Scanner(new File(key));
 			inputfile_Scanner = new Scanner(new File(inputfile));
-			
+
 			// convert key to byte array
 			// key contains a single line of 64 hex characters, which represents
 			// a 256-bit key
 			this.key = HextoByteArray(key_Scanner.nextLine().toUpperCase());
-			
+
 			// convert input file to byte array line by line
 			while (inputfile_Scanner.hasNextLine()) {
 				String line = inputfile_Scanner.nextLine();
 				this.context.add(HextoByteArray(line.toUpperCase()));
 			}
-			
+
 		} catch (Exception ex) {
 			ErrorHandler(ex.toString());
 		}
@@ -73,7 +75,7 @@ public class AES {
 	 * @param inputfile
 	 */
 	private byte[] HextoByteArray(String HexCharacter) {
-		byte[] byteArray = new byte[HexCharacter.length()/2];
+		byte[] byteArray = new byte[HexCharacter.length() / 2];
 		// check if input contains any non-hex character
 		if (!HexCharacter.matches("-?[0-9a-fA-F]+")) {
 			ErrorHandler("Input string contains non-hex character");
@@ -82,14 +84,14 @@ public class AES {
 		if (HexCharacter.length() < 32) {
 			ErrorHandler("Input string is less than 32 hex characters");
 		}
-		
+
 		try {
-		    for (int i = 0; i < byteArray.length; i++) {
-		      int index = i * 2;
-		      int v = Integer.parseInt(HexCharacter.substring(index, index + 2), 16);
-		      byteArray[i] = (byte) v;
-		    }
-			
+			for (int i = 0; i < byteArray.length; i++) {
+				int index = i * 2;
+				int v = Integer.parseInt(HexCharacter.substring(index, index + 2), 16);
+				byteArray[i] = (byte) v;
+			}
+
 		} catch (Exception ex) {
 			throw ex;
 		}
@@ -109,7 +111,7 @@ public class AES {
 		if (!args[0].equals("e") && !args[0].equals("d")) {
 			ErrorHandler("Incorrect mode ! \n('d' for Decryption, 'e' for Encryption)");
 		}
-		// Ok 								mode key file text file
+		// Ok mode key file text file
 		AES aes = new AES(args[0].charAt(0), args[1], args[2]);
 		aes.Calculate();
 	}
