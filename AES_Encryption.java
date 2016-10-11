@@ -31,8 +31,10 @@ public class AES_Encryption {
 		for (int i = 0; i < source.size(); i++) {
 			byte[] curr = source.get(i);
 			this.GenerateState(curr);
-			this.addRoundKey(this.state, this.source, 0, Nb);
-
+			this.addRoundKey(this.state, this.w, 0, Nb);
+			for(int k = 0; k < 4; k ++){
+				System.out.println(Arrays.toString(w[k]));
+			}
 		}
 	}
 
@@ -98,10 +100,10 @@ public class AES_Encryption {
 		return byteArray;
 	}
 
-	private void addRoundKey(byte[][] state, ArrayList<byte[]> w, int Round, int Nb) {
+	private void addRoundKey(byte[][] state, byte[][] w, int Round, int Nb) {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < Nb; j++) {
-				state[i][j] ^= w.get(Round * Nb + j)[i];
+				state[i][j] ^= w[Round * Nb + j][i];
 			}
 		}
 	}

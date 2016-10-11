@@ -226,6 +226,9 @@ public class AES_TEST {
 			state[i / 4][i % 4] = in[i % 4 * 4 + i / 4];
 		}
 		state = AddRoundKey(state, w, 0);
+		for(int k = 0 ; k < 4;k++){
+			System.out.println(Arrays.toString(state[k]));
+		}
 		for (int round = 1; round < Nr; round++) {
 			state = SubBytes(state);
 			state = ShiftRows(state);
@@ -343,7 +346,7 @@ public class AES_TEST {
 			key_Scanner = new Scanner(new File("/Users/waynezhang/Desktop/JavaDevelop/AES/src/key.txt"));
 			file_Scanner = new Scanner(new File("/Users/waynezhang/Desktop/JavaDevelop/AES/src/input.txt"));
 			byte[] result = encrypt(HextoByteArray(file_Scanner.nextLine()), HextoByteArray(key_Scanner.nextLine()));
-			System.out.println(Arrays.toString(result));
+			//System.out.println(Arrays.toString(result));
 		} catch (Exception ex) {
 
 		}
