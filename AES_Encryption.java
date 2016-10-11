@@ -40,24 +40,23 @@ public class AES_Encryption {
 		int Nr = 14;
 
 		this.keyExpansion(this.key);
-		for (int i = 0; i < source.size(); i++) {
-			byte[] curr = source.get(i);
+		for (int i = 0; i < this.source.size(); i++) {
+			byte[] curr = this.source.get(i);
 			this.GenerateState(curr);
 			this.addRoundKey(this.state, this.w, 0, Nb);
 
 			for (int j = 1; j < Nr; j++) {
-				subBytes(Nb);
-				shiftRows(Nb);
-				MixColumns(Nb);
+				this.subBytes(Nb);
+				this.shiftRows(Nb);
+				this.MixColumns(Nb);
 				this.addRoundKey(this.state, this.w, j, Nb);
 			}
-			subBytes(Nb);
-			shiftRows(Nb);
+			this.subBytes(Nb);
+			this.shiftRows(Nb);
 			this.addRoundKey(this.state, this.w, Nr, Nb);
 			this.GenerateCipher();
 		}
 		this.writeCiphertoFile();
-
 	}
 
 	private void writeCiphertoFile() {
