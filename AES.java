@@ -84,10 +84,11 @@ public class AES {
 		}
 		
 		try {
-			for (int i = 0; i < HexCharacter.length(); i += 2) {
-				byteArray[i / 2] = (byte) ((Character.digit(HexCharacter.charAt(i), 16) << 4) + Character.digit(
-						HexCharacter.charAt(i + 1), 16));
-			}
+		    for (int i = 0; i < byteArray.length; i++) {
+		      int index = i * 2;
+		      int v = Integer.parseInt(HexCharacter.substring(index, index + 2), 16);
+		      byteArray[i] = (byte) v;
+		    }
 			
 		} catch (Exception ex) {
 			throw ex;
