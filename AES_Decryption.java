@@ -84,19 +84,46 @@ public class AES_Decryption {
 		outputBuffer.add(output);
 	}
 
-	private void InverseMixColumns(int nb) {
-		// TODO Auto-generated method stub
+	private void InverseMixColumns(int Nb) {
 
 	}
 
-	private void InverseShiftRows(int nb) {
-		// TODO Auto-generated method stub
+	private void InverseShiftRows(int Nb) {
+		byte[][] temp = new byte[4][4];
 
+		temp[0][0] = state[0][0];
+		temp[1][0] = state[1][3];
+		temp[2][0] = state[2][2];
+		temp[3][0] = state[3][1];
+
+		temp[0][1] = state[0][1];
+		temp[1][1] = state[1][0];
+		temp[2][1] = state[2][3];
+		temp[3][1] = state[3][2];
+
+		temp[0][2] = state[0][2];
+		temp[1][2] = state[1][1];
+		temp[2][2] = state[2][0];
+		temp[3][2] = state[3][3];
+
+		temp[0][3] = state[0][3];
+		temp[1][3] = state[1][2];
+		temp[2][3] = state[2][1];
+		temp[3][3] = state[3][0];
+
+		for (int i = 0; i < Nb; i++) {
+			for (int j = 0; j < Nb; j++) {
+				state[i][j] = temp[i][j];
+			}
+		}
 	}
 
-	private void InverseSubBytes(int nb) {
-		// TODO Auto-generated method stub
-
+	private void InverseSubBytes(int Nb) {
+			for (int i = 0; i < 4; i++) {
+				for (int j = 0; j < Nb; j++) {
+					state[i][j] = (byte) (sbox[state[i][j] & 0xFF]); //using inverse sbox
+				}
+			}
 	}
 
 	private void keyExpansion(byte[] key) {
