@@ -113,8 +113,123 @@ public class AES_Decryption {
 		outputBuffer.add(output);
 	}
 
-	private void InverseMixColumns(int Nb) {
-
+	private void InverseMixColumns(int Nb){
+		int[] stateCol = new int[4];
+		byte a09 = (byte)0x09; //Multiply 9
+		byte a11 = (byte)0x0b; //Multiply 11
+		byte a13 = (byte)0x0d; //Multiply 13
+		byte a14 = (byte)0x0e; //Multiply 14
+	    for (int c = 0; c < 4; c++) {
+			stateCol[0] = Multiply(a14, state[0][c]) ^ Multiply(a11, state[1][c]) ^ Multiply(a13,state[2][c])  ^ Multiply(a09,state[3][c]);
+			stateCol[1] = Multiply(a09, state[0][c]) ^ Multiply(a14, state[1][c]) ^ Multiply(a11,state[2][c])  ^ Multiply(a13,state[3][c]);
+			stateCol[2] = Multiply(a13, state[0][c]) ^ Multiply(a09, state[1][c]) ^ Multiply(a14,state[2][c])  ^ Multiply(a11,state[3][c]);
+			stateCol[3] = Multiply(a11, state[0][c]) ^ Multiply(a13, state[1][c]) ^ Multiply(a09,state[2][c])  ^ Multiply(a14,state[3][c]);
+			for (int i = 0; i < 4; i++){
+				state[i][c] = (byte)(stateCol[i]);
+			}
+		}
+	}
+	public static byte Multiply(byte a, byte b) {
+		byte r = 0;
+		int leftmost = 0;
+		byte aa = a, bb = b, t;
+		if(a == 0x09){//0x09 = 0b1001 can be regard as 0b1000 XOR 0b0001
+			byte temp = b;
+			for(int i=0; i<3; i++){
+				leftmost = 0;
+				if((bb & 0x80) == 0x80){
+					leftmost = 1;
+				}
+				bb = (byte)(bb << 1);
+				if(leftmost == 1){
+					bb = (byte)(bb ^ 0x1b);
+				}
+			}
+			r= (byte)(bb^temp);
+		}else if(a== 0x0b){//0x0b = 0b1011, can be regard as 0b1000 XOR 0b0011, which is 0b1000 XOR 0b0010 XOR 0b0001
+			byte temp = b;
+			for(int i=0; i<3; i++){
+				leftmost = 0;
+				if((bb & 0x80) == 0x80){
+					leftmost = 1;
+				}
+				bb = (byte)(bb << 1);
+				if(leftmost == 1){
+					bb = (byte)(bb ^ 0x1b);
+				}
+			}
+			leftmost = 0;
+			if((temp & 0x80) == 0x80){
+					leftmost = 1;
+			}
+			byte temp2 = temp;
+			temp = (byte)(temp <<1);
+			if(leftmost==1){
+				temp = (byte) (temp ^ 0x1b);
+			}
+			r = (byte)(bb ^ temp ^ temp2);
+		}else if(a== 0x0d){
+			byte b1 = b;
+			byte b2 = b;
+			byte b3 = b;
+			for(int i=0; i<3; i++){
+				leftmost = 0;
+				if((b1 & 0x80) == 0x80){
+					leftmost = 1;
+				}
+				b1 = (byte)(b1 << 1);
+				if(leftmost == 1){
+					b1 = (byte)(b1 ^ 0x1b);
+				}
+			}
+			for(int i=0; i<2; i++){
+				leftmost = 0;
+				if((b2 & 0x80) == 0x80){
+					leftmost = 1;
+				}
+				b2 = (byte)(b2 << 1);
+				if(leftmost == 1){
+					b2 = (byte)(b2 ^ 0x1b);
+				}
+			}
+			r = (byte)(b1 ^ b2 ^ b3);
+		}else if(a==0x0e){
+			byte b1 = b;
+			byte b2 = b;
+			byte b3 = b;
+			for(int i=0; i<3; i++){
+				leftmost = 0;
+				if((b1 & 0x80) == 0x80){
+					leftmost = 1;
+				}
+				b1 = (byte)(b1 << 1);
+				if(leftmost == 1){
+					b1 = (byte)(b1 ^ 0x1b);
+				}
+			}
+			for(int i=0; i<2; i++){
+				leftmost = 0;
+				if((b2 & 0x80) == 0x80){
+					leftmost = 1;
+				}
+				b2 = (byte)(b2 << 1);
+				if(leftmost == 1){
+					b2 = (byte)(b2 ^ 0x1b);
+				}
+			}
+			for(int i=0; i<1; i++){
+				leftmost = 0;
+				if((b3 & 0x80) == 0x80){
+					leftmost = 1;
+				}
+				b3 = (byte)(b3 << 1);
+				if(leftmost == 1){
+					b3 = (byte)(b3 ^ 0x1b);
+				}
+			}
+			r = (byte)(b1 ^ b2 ^ b3);
+		}
+		return r;
 	}
 
 	private void InverseShiftRows(int Nb) {
