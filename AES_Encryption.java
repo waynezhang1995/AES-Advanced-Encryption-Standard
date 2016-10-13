@@ -9,6 +9,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * @author YuWei (Wayne) Zhang
+ * @author Zihan Ye
+ */
+
 public class AES_Encryption {
 
 	private final char[] hexTable;
@@ -40,43 +45,57 @@ public class AES_Encryption {
 			{ 0x20, 0x00, 0x00, 0x00 }, { 0x40, 0x00, 0x00, 0x00 }, { 0x80, 0x00, 0x00, 0x00 },
 			{ 0x1b, 0x00, 0x00, 0x00 }, { 0x36, 0x00, 0x00, 0x00 } };
 
+	/**
+	 * 
+	 * @param key - in bytes
+	 * @param source - each line is converted to byte array, and then insert into arraylist
+	 * @param inputFileName - absolute path of inputFile
+	 */
 	public AES_Encryption(byte[] key, ArrayList<byte[]> source, String inputFileName) {
 		this.InputFileName = inputFileName;
-		this.hexTable = "0123456789ABCDEF".toCharArray();
+		this.hexTable = "0123456789ABCDEF".toCharArray(); //hextable for references
 		this.key = key;
 		this.source = source;
-		this.state = new byte[4][4];
-		this.outputBuffer = new ArrayList<String>();
+		this.state = new byte[4][4]; //state matrix
+		this.outputBuffer = new ArrayList<String>(); 
 	}
 
+	/**
+	 * This function first calculates subkeys for each round, and 
+	 * then execute the main AES encryption algorithm based on 
+	 * the pseudo code in AES standard documentation
+	 */
 	public void encrypt() {
 		int Nb = 4;
 		int Nr = 14;
-		this.keyExpansion(this.key);
-		for (int i = 0; i < this.source.size(); i++) {
-			byte[] curr = this.source.get(i);
-			this.GenerateState(curr);
-			this.addRoundKey(this.state, this.w, 0, Nb);
-
+		this.keyExpansion(this.key); //calculate subkeys
+		for (int i = 0; i < this.source.size(); i++) { //read input file line by line
+			byte[] curr = this.source.get(i);	//get current line
+			this.GenerateState(curr);	//generate state matrix
+			this.addRoundKey(this.state, this.w, 0, Nb); //Initial step: addRoundKey
+			//we have 13 rounds plus an extra round outside the loop
 			for (int j = 1; j < Nr; j++) {
-				this.subBytes(Nb);
-				this.shiftRows(Nb);
-				this.MixColumns(Nb);
-				this.addRoundKey(this.state, this.w, j, Nb);
+				this.subBytes(Nb); //step 1: subBytes
+				this.shiftRows(Nb); //step 2: shiftRows
+				this.MixColumns(Nb); //step 3: mixColumns
+				this.addRoundKey(this.state, this.w, j, Nb); //step 4: addRoundKey
 			}
+			//14th round
 			this.subBytes(Nb);
 			this.shiftRows(Nb);
 			this.addRoundKey(this.state, this.w, Nr, Nb);
-			this.GenerateCipher();
+			this.GenerateCipher(); //generate cipher message in bytes
 		}
-		this.writeCiphertoFile();
+		this.writeCiphertoFile(); //output to <inputFile>.enc file
 	}
 
+	/**
+	 * This function outputs cipher text to a .enc file
+	 */
 	private void writeCiphertoFile() {
 		try {
 			PrintWriter writer = new PrintWriter(this.InputFileName + ".enc", "UTF-8");
-			for (int i = 0; i < outputBuffer.size(); i++) {
-				// HextoByteArray(outputBuffer.get(i));
+			for (int i = 0; i < outputBuffer.size(); i++) { //read ciphers line by line
 				writer.println(outputBuffer.get(i));
 			}
 			writer.close();
@@ -84,37 +103,30 @@ public class AES_Encryption {
 		}
 	}
 
+	/**
+	 * This function generates cipher text
+	 */
 	private void GenerateCipher() {
 		byte[] result = new byte[4 * 4]; // 16 byte ciphertext as required
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
-				result[i + 4 * j] = this.state[i][j];
+				result[i + 4 * j] = this.state[i][j]; //covert state matrix to cipertext array 
 			}
 		}
 		// convert byte array to hex character array
 		// 1 byte = 2 hex character
-		// System.out.println("Original byte array is: " +
-		// Arrays.toString(result));
 		char[] hexCipher = new char[result.length * 2];
 		for (int i = 0; i < result.length; i++) {
 			hexCipher[i * 2] = hexTable[(result[i] & 0xFF) >>> 4];
 			hexCipher[i * 2 + 1] = hexTable[(result[i] & 0xFF) & 0x0F];
 		}
-		String output = new String(hexCipher);
-		outputBuffer.add(output);
+		String output = new String(hexCipher); //convert to hex character
+		outputBuffer.add(output); //add to buffer
 	}
 
-	/*
-	 * private void HextoByteArray(String HexCharacter) { byte[] byteArray = new
-	 * byte[HexCharacter.length() / 2]; // check if input contains any non-hex
-	 * character
-	 * 
-	 * try { for (int i = 0; i < byteArray.length; i++) { int index = i * 2; int
-	 * v = Integer.parseInt(HexCharacter.substring(index, index + 2), 16);
-	 * byteArray[i] = (byte) v; }
-	 * 
-	 * } catch (Exception ex) { throw ex; } System.out.println(
-	 * "Convert to byte: " + Arrays.toString(byteArray)); }
+	/**
+	 * This function generates state matrix
+	 * @param line - input plaintext in bytes
 	 */
 	private void GenerateState(byte[] line) {
 		for (int i = 0; i < 4; i++) {
@@ -124,6 +136,10 @@ public class AES_Encryption {
 		}
 	}
 
+	/**
+	 * This function based on the pseudo code in AES standard documentation (section 5.2)
+	 * @param key - input key in bytes
+	 */
 	private void keyExpansion(byte[] key) {
 		int Nb = 4;
 		int Nk = 8; // key length (in words)
@@ -131,6 +147,7 @@ public class AES_Encryption {
 		// initialization
 		int totalWords = Nb * (Nr + 1);
 		this.w = new byte[totalWords][Nb];
+		//copy first 16 bytes to w
 		for (int i = 0; i < Nk; i++) {
 			for (int j = 0; j < 4; j++) {
 				this.w[i][j] = this.key[4 * i + j];
@@ -158,14 +175,24 @@ public class AES_Encryption {
 		}
 	}
 
+	/**
+	 * Helper method for key expansion
+	 * Substitute corresponding byte in SBOX
+	 * @param byteArray - input
+	 * @return byte array after substitution
+	 */
 	private byte[] SubWord(byte[] byteArray) {
 		for (int i = 0; i < 4; i++) {
-			byteArray[i] = (byte) this.sbox[byteArray[i] & 0xFF];
+			byteArray[i] = (byte) this.sbox[byteArray[i] & 0xFF]; //make sure it is positive 
 		}
 		return byteArray;
 	}
 
-	// shift by one
+	/**
+	 * Shift one byte left
+	 * @param byteArray - input
+	 * @return byte array after byte shift 
+	 */
 	private byte[] rotWord(byte[] byteArray) {
 		byte[] tmp = new byte[4];
 		for (int i = 0; i < 3; i++) {
@@ -176,6 +203,14 @@ public class AES_Encryption {
 		return byteArray;
 	}
 
+	/**
+	 * In the AddRoundKey() transformation, a Round Key is added to the State by a simple bitwise
+	 * XOR operation
+	 * @param state - state matrix
+	 * @param w - subkeys
+	 * @param Round - current round 
+	 * @param Nb - number of round
+	 */
 	private void addRoundKey(byte[][] state, byte[][] w, int Round, int Nb) {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < Nb; j++) {
@@ -184,6 +219,11 @@ public class AES_Encryption {
 		}
 	}
 
+	/**
+	 * The SubBytes() transformation is a non-linear byte substitution that operates independently
+	 * on each byte of the State using a substitution table (S-box).
+	 * @param Nb - number of round
+	 */
 	private void subBytes(int Nb) {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < Nb; j++) {
@@ -192,6 +232,11 @@ public class AES_Encryption {
 		}
 	}
 
+	/**
+	 * Transformation in the Cipher that processes the State by cyclically
+	 * shifting the last three rows of the State by different offsets. 
+	 * @param Nb - number of round
+	 */
 	private void shiftRows(int Nb) {
 		byte[][] temp = new byte[4][4];
 
@@ -215,6 +260,7 @@ public class AES_Encryption {
 		temp[2][3] = state[2][1];
 		temp[3][3] = state[3][2];
 
+		//copy back to state matrix
 		for (int i = 0; i < Nb; i++) {
 			for (int j = 0; j < Nb; j++) {
 				state[i][j] = temp[i][j];
@@ -222,15 +268,24 @@ public class AES_Encryption {
 		}
 	}
 
+	/**
+	 * Transformation in the Cipher that takes all of the columns of the
+	 * State and mixes their data (independently of one another) to
+	 * produce new columns. 
+	 * @param Nb - number of round
+	 */
 	private void MixColumns(int Nb) {
 		int[] stateCol = new int[4];
-		byte a02 = (byte) 0x02;
-		byte a03 = (byte) 0x03;
+		byte a02 = (byte) 0x02; //multiply 2
+		byte a03 = (byte) 0x03; //multiply 3
 
 		/*
 		 * multiply the 4x4 matrix and 4x1 matrix
 		 * 
-		 * 3 2 1 1 * s[0][c] 1 2 3 1 s[1][c] 1 1 2 3 s[2][c] 3 1 1 2 s[3][c]
+		 *    2 3 1 1   *   s[0][j] s[1][j] s[2][j] s[3][j]   =   (2 * s[0][j]) ^ (3 * s[1][j]) ^ s[2][j] ^ s[3][j]
+		 *    1 2 3 1                                             s[0][j] ^ (2 * s[1][j]) ^ (3 * s[2][j]) ^ s[3][j]
+		 *    1 1 2 3                                             s[0][j] ^ s[1][j] ^ (2 * s[2][j]) ^ (3 * s[3][j])
+		 *    3 1 1 2                                             (3 * s[0][j]) ^ s[1][j] ^ s[2][j] ^ (2 * s[3][j])
 		 */
 		for (int j = 0; j < Nb; j++) {
 			stateCol[0] = Multiply(a02, state[0][j]) ^ Multiply(a03, state[1][j]) ^ state[2][j] ^ state[3][j];

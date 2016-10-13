@@ -21,6 +21,9 @@ public class AES {
 
 	/**
 	 * Constructor
+	 * @param mode - e or d
+	 * @param key - input keyFile name
+	 * @param inputfile - input inputFile name
 	 */
 	public AES(char mode, String key, String inputfile) {
 		this.mode = mode;
@@ -32,6 +35,9 @@ public class AES {
 		this.SourceSetUp(key, inputfile);
 	}
 
+	/**
+	 * Program core. This function either encryption/decryption based on input mode
+	 */
 	private void Calculate() {
 		if (this.mode == 'e') {
 			AES_Encryption encryption = new AES_Encryption(this.key, this.context,this.inputFileName);
@@ -42,6 +48,11 @@ public class AES {
 		}
 	}
 
+	/**
+	 *  This function scanners files and convert to byte arrays
+	 * @param key
+	 * @param inputfile
+	 */
 	private void SourceSetUp(String key, String inputfile) {
 		this.inputFileName = inputfile;
 		Scanner key_Scanner;
@@ -97,6 +108,10 @@ public class AES {
 		return byteArray;
 	}
 
+	/**
+	 * Print error message 
+	 * @param error - error
+	 */
 	private static void ErrorHandler(String error) {
 		System.err.println(error);
 		System.exit(0);

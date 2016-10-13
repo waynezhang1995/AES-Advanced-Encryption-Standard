@@ -3,6 +3,13 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * 
+ * @author YuWei (Wayne) Zhang
+ * @author Zihan Ye
+ *
+ */
+
 public class AES_Decryption {
 
 	private final char[] hexTable;
@@ -50,42 +57,57 @@ public class AES_Decryption {
 			{ 0x20, 0x00, 0x00, 0x00 }, { 0x40, 0x00, 0x00, 0x00 }, { 0x80, 0x00, 0x00, 0x00 },
 			{ 0x1b, 0x00, 0x00, 0x00 }, { 0x36, 0x00, 0x00, 0x00 } };
 
+	/**
+	 * 
+	 * @param key - in bytes
+	 * @param source - each line is converted to byte array, and then insert into arraylist
+	 * @param inputFileName - absolute path of inputFile
+	 */
 	public AES_Decryption(byte[] key, ArrayList<byte[]> source, String inputFileName) {
 		this.InputFileName = inputFileName;
-		this.hexTable = "0123456789ABCDEF".toCharArray();
+		this.hexTable = "0123456789ABCDEF".toCharArray();//hextable for references
 		this.key = key;
 		this.source = source;
-		this.state = new byte[4][4];
+		this.state = new byte[4][4];//state matrix
 		this.outputBuffer = new ArrayList<String>();
 	}
 
+	/**
+	 * This function first calculates subkeys for each round, and 
+	 * then execute the main AES decryption algorithm based on 
+	 * the pseudo code in AES standard documentation
+	 */
 	public void decrypt() {
 		int Nb = 4;
 		int Nr = 14;
-		this.keyExpansion(this.key);
-		for (int i = 0; i < this.source.size(); i++) {
-			byte[] curr = this.source.get(i);
-			this.GenerateState(curr);
-			this.addRoundKey(this.state, this.w, Nr, Nb);
+		this.keyExpansion(this.key); //calculate subkeys
+		for (int i = 0; i < this.source.size(); i++) { //read input file line by line
+			byte[] curr = this.source.get(i); //get current line
+			this.GenerateState(curr); //generate state matrix
+			this.addRoundKey(this.state, this.w, Nr, Nb); //Initial step: addRoundKey
+			//we have 13 rounds plus an extra round outside the loop
 			for (int j = Nr - 1; j > 0; j--) {
-				this.InverseSubBytes(Nb);
-				this.InverseShiftRows(Nb);
-				this.addRoundKey(this.state, this.w, j, Nb);
-				this.InverseMixColumns(Nb);
+				this.InverseSubBytes(Nb) ;//step 1: InversesubBytes
+				this.InverseShiftRows(Nb);//step 2: InverseshiftRows
+				this.addRoundKey(this.state, this.w, j, Nb); //step 3: addRoundKey
+				this.InverseMixColumns(Nb);//step 4: InversemixColumns
 			}
+			//14th round
 			this.InverseSubBytes(Nb);
 			this.InverseShiftRows(Nb);
 			this.addRoundKey(this.state, this.w, 0, Nb);
-			this.GeneratePlain();
+			this.GeneratePlain(); //generate plaintext
 		}
-		this.writePlaintoFile();
+		this.writePlaintoFile(); //output to .dec file
 	}
 
+	/**
+	 * This function outputs plain text to a .dec file
+	 */
 	private void writePlaintoFile() {
 		try {
 			PrintWriter writer = new PrintWriter(this.InputFileName + ".dec", "UTF-8");
-			for (int i = 0; i < outputBuffer.size(); i++) {
-				// HextoByteArray(outputBuffer.get(i));
+			for (int i = 0; i < outputBuffer.size(); i++) { //read line by line
 				writer.println(outputBuffer.get(i));
 			}
 			writer.close();
@@ -93,6 +115,9 @@ public class AES_Decryption {
 		}
 	}
 
+	/**
+	 * This function generates plain text
+	 */
 	private void GeneratePlain() {
 		byte[] result = new byte[4 * 4]; // 16 byte ciphertext as required
 		for (int i = 0; i < 4; i++) {
@@ -102,23 +127,33 @@ public class AES_Decryption {
 		}
 		// convert byte array to hex character array
 		// 1 byte = 2 hex character
-		// System.out.println("Original byte array is: " +
-		// Arrays.toString(result));
 		char[] hexPlain = new char[result.length * 2];
 		for (int i = 0; i < result.length; i++) {
 			hexPlain[i * 2] = hexTable[(result[i] & 0xFF) >>> 4];
 			hexPlain[i * 2 + 1] = hexTable[(result[i] & 0xFF) & 0x0F];
 		}
-		String output = new String(hexPlain);
-		outputBuffer.add(output);
+		String output = new String(hexPlain); //convert to hex character
+		outputBuffer.add(output); //add to buffer
 	}
 
+	/**
+	 * Transformation in the Inverse Cipher that is the inverse of
+	 * MixColumns(). 
+	 * @param Nb - number of round
+	 */
 	private void InverseMixColumns(int Nb){
 		int[] stateCol = new int[4];
 		byte a09 = (byte)0x09; //Multiply 9
 		byte a11 = (byte)0x0b; //Multiply 11
 		byte a13 = (byte)0x0d; //Multiply 13
 		byte a14 = (byte)0x0e; //Multiply 14
+		/* Multiply 4x4 matrix and 4x1 maitrix
+		 *
+		 *     14 11 13 09   *   [s[0][j] s[1][j] s[2][j] s[3][j]]   =   14 * s[0][j] ^ 11 * s[1][j] ^ 13 * s[2][j] ^  9 * s[3][j]
+		 *     09 14 11 13												  9 * s[0][j] ^ 14 * s[1][j] ^ 11 * s[2][j] ^ 13 * s[3][j]
+		 *     13 09 14 11                                               13 * s[0][j] ^  9 * s[1][j] ^ 14 * s[2][j] ^ 11 * s[3][j]
+		 *     11 13 09 14                                               11 * s[0][j] ^ 13 * s[1][j] ^  9 * s[2][j] ^ 14 * s[3][j]
+		 */
 	    for (int c = 0; c < 4; c++) {
 			stateCol[0] = Multiply(a14, state[0][c]) ^ Multiply(a11, state[1][c]) ^ Multiply(a13,state[2][c])  ^ Multiply(a09,state[3][c]);
 			stateCol[1] = Multiply(a09, state[0][c]) ^ Multiply(a14, state[1][c]) ^ Multiply(a11,state[2][c])  ^ Multiply(a13,state[3][c]);
@@ -129,59 +164,44 @@ public class AES_Decryption {
 			}
 		}
 	}
+	
+	/**
+	 * Multiply b by a times, can be regard as shift b Multiple digits
+	 * @param a
+	 * @param b
+	 * @return
+	 */
 	public static byte Multiply(byte a, byte b) {
 		byte r = 0;
 		int leftmost = 0;
-		byte aa = a, bb = b, t;
-		if(a == 0x09){//0x09 = 0b1001 can be regard as 0b1000 XOR 0b0001
-			byte temp = b;
-			for(int i=0; i<3; i++){
-				leftmost = 0;
-				if((bb & 0x80) == 0x80){
-					leftmost = 1;
-				}
-				bb = (byte)(bb << 1);
-				if(leftmost == 1){
-					bb = (byte)(bb ^ 0x1b);
-				}
-			}
-			r= (byte)(bb^temp);
-		}else if(a== 0x0b){//0x0b = 0b1011, can be regard as 0b1000 XOR 0b0011, which is 0b1000 XOR 0b0010 XOR 0b0001
-			byte temp = b;
-			for(int i=0; i<3; i++){
-				leftmost = 0;
-				if((bb & 0x80) == 0x80){
-					leftmost = 1;
-				}
-				bb = (byte)(bb << 1);
-				if(leftmost == 1){
-					bb = (byte)(bb ^ 0x1b);
-				}
-			}
+		byte b1 = b;
+		byte b2 = b;
+		//for 0x80 = 0b1000. Shift 3 digits << 3 
+		for(int i=0; i<3; i++){
 			leftmost = 0;
-			if((temp & 0x80) == 0x80){
-					leftmost = 1;
+			if((b1 & 0x80) == 0x80){
+				leftmost = 1;
 			}
-			byte temp2 = temp;
-			temp = (byte)(temp <<1);
-			if(leftmost==1){
-				temp = (byte) (temp ^ 0x1b);
+			b1 = (byte)(b1 << 1);
+			if(leftmost == 1){
+				b1 = (byte)(b1 ^ 0x1b);
 			}
-			r = (byte)(bb ^ temp ^ temp2);
-		}else if(a== 0x0d){
-			byte b1 = b;
-			byte b2 = b;
+		}
+		if(a == 0x09){//0x09 = 0b1001 can be regard as 0b1000 XOR 0b0001
+			r= (byte)(b1^b2);
+		}else if(a== 0x0b){//0x0b = 0b1011, can be regard as 0b1000 XOR 0b0010 XOR 0b0001
 			byte b3 = b;
-			for(int i=0; i<3; i++){
-				leftmost = 0;
-				if((b1 & 0x80) == 0x80){
+			leftmost = 0;
+			if((b2 & 0x80) == 0x80){
 					leftmost = 1;
-				}
-				b1 = (byte)(b1 << 1);
-				if(leftmost == 1){
-					b1 = (byte)(b1 ^ 0x1b);
-				}
 			}
+			b2 = (byte)(b2 <<1);
+			if(leftmost==1){
+				b2 = (byte) (b2 ^ 0x1b);
+			}
+			r = (byte)(b1 ^ b2 ^ b3);
+		}else if(a== 0x0d){//0x0d = 0b1011 which can be regard as 0b1000 XOR 0b0010 XOR 0b0001
+			byte b3 = b;
 			for(int i=0; i<2; i++){
 				leftmost = 0;
 				if((b2 & 0x80) == 0x80){
@@ -193,20 +213,9 @@ public class AES_Decryption {
 				}
 			}
 			r = (byte)(b1 ^ b2 ^ b3);
-		}else if(a==0x0e){
-			byte b1 = b;
-			byte b2 = b;
+		}else if(a==0x0e){//0x0e = 0b1110, can be regard as 0b1000 XOR 0b0100 XOR 0b0010
 			byte b3 = b;
-			for(int i=0; i<3; i++){
-				leftmost = 0;
-				if((b1 & 0x80) == 0x80){
-					leftmost = 1;
-				}
-				b1 = (byte)(b1 << 1);
-				if(leftmost == 1){
-					b1 = (byte)(b1 ^ 0x1b);
-				}
-			}
+			//shift left twice
 			for(int i=0; i<2; i++){
 				leftmost = 0;
 				if((b2 & 0x80) == 0x80){
@@ -217,21 +226,25 @@ public class AES_Decryption {
 					b2 = (byte)(b2 ^ 0x1b);
 				}
 			}
-			for(int i=0; i<1; i++){
-				leftmost = 0;
-				if((b3 & 0x80) == 0x80){
-					leftmost = 1;
-				}
-				b3 = (byte)(b3 << 1);
-				if(leftmost == 1){
-					b3 = (byte)(b3 ^ 0x1b);
-				}
+			//shift left once
+			leftmost = 0;
+			if((b3 & 0x80) == 0x80){
+				leftmost = 1;
 			}
+			b3 = (byte)(b3 << 1);
+			if(leftmost == 1){
+				b3 = (byte)(b3 ^ 0x1b);
+			}	
 			r = (byte)(b1 ^ b2 ^ b3);
 		}
 		return r;
 	}
 
+	/**
+	 * Transformation in the Inverse Cipher that is the inverse of
+	 * ShiftRows(). 
+	 * @param Nb - number of round
+	 */
 	private void InverseShiftRows(int Nb) {
 		byte[][] temp = new byte[4][4];
 
@@ -262,6 +275,11 @@ public class AES_Decryption {
 		}
 	}
 
+	/**
+	 * Transformation in the Inverse Cipher that is the inverse of
+	 * SubBytes(). 
+	 * @param Nb - number of round
+	 */
 	private void InverseSubBytes(int Nb) {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < Nb; j++) {
@@ -270,6 +288,10 @@ public class AES_Decryption {
 		}
 	}
 
+	/**
+	 * This function based on the pseudo code in AES standard documentation (section 5.2)
+	 * @param key - input key in bytes
+	 */
 	private void keyExpansion(byte[] key) {
 
 		int Nb = 4;
@@ -308,6 +330,12 @@ public class AES_Decryption {
 		}
 	}
 
+	/**
+	 * Helper method for key expansion
+	 * Substitute corresponding byte in SBOX
+	 * @param byteArray - input
+	 * @return byte array after substitution
+	 */
 	private byte[] SubWord(byte[] byteArray) {
 		for (int i = 0; i < 4; i++) {
 			byteArray[i] = (byte) this.sbox[byteArray[i] & 0xFF];
@@ -315,7 +343,11 @@ public class AES_Decryption {
 		return byteArray;
 	}
 
-	// shift by one
+	/**
+	 * Shift one byte left
+	 * @param byteArray - input
+	 * @return byte array after byte shift 
+	 */
 	private byte[] rotWord(byte[] byteArray) {
 		byte[] tmp = new byte[4];
 		for (int i = 0; i < 3; i++) {
@@ -326,6 +358,14 @@ public class AES_Decryption {
 		return byteArray;
 	}
 
+	/**
+	 * In the AddRoundKey() transformation, a Round Key is added to the State by a simple bitwise
+	 * XOR operation
+	 * @param state - state matrix
+	 * @param w - subkeys
+	 * @param Round - current round 
+	 * @param Nb - number of round
+	 */
 	private void addRoundKey(byte[][] state, byte[][] w, int Round, int Nb) {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < Nb; j++) {
@@ -333,7 +373,11 @@ public class AES_Decryption {
 			}
 		}
 	}
-
+	
+	/**
+	 * This function generates state matrix
+	 * @param line - input ciphertext in bytes
+	 */
 	private void GenerateState(byte[] line) {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
